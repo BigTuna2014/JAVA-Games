@@ -1,0 +1,165 @@
+package com.bt2.generator;
+
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.bt2.generator.Block.BlockType;
+import com.bt2.images.Images;
+import com.bt2.moveableobjects.Player;
+import com.bt4.gop.main.Vector2F;
+import com.bt4.gop.main.loadImageFrom;
+
+public class World {
+
+	public static Vector2F mapPos = new Vector2F(); 
+	private String worldName;
+	private BufferedImage map;
+	private int worldWidth;
+	private int worldHeight;
+	private int blockSize = 48;
+
+	private Player player;
+	
+	private CopyOnWriteArrayList<BlockEntity> blockents;
+	TileManager tiles;
+
+	private Block spawn;
+	
+	private boolean hasSize = false;
+
+	public World(String worldName) {
+		this.worldName = worldName;
+		Vector2F.setWorldVariables(mapPos.xpos, mapPos.ypos);
+	}
+
+	public void init() {
+		blockents = new CopyOnWriteArrayList<BlockEntity>();
+		tiles = new TileManager();
+		if(player != null) {
+			player.init(this);
+		}
+	}
+
+	public void tick(double deltaTime) {
+		Vector2F.setWorldVariables(mapPos.xpos, mapPos.ypos);
+		
+		spawn.tick(deltaTime);
+		
+		tiles.tick(deltaTime);
+
+		if (!blockents.isEmpty()) {
+			for (BlockEntity ent : blockents) {
+				if (player.render.intersects(ent)) {
+					ent.tick(deltaTime);
+
+					ent.setAlive(true);
+				} else {
+					ent.setAlive(false);
+				}
+			}
+		}
+		
+		if(player != null) {
+			player.tick(deltaTime);
+		}
+	}
+
+	public void render(Graphics2D g) {
+		tiles.render(g);
+
+		spawn.render(g);
+		
+		if (!blockents.isEmpty()) {
+			for (BlockEntity ent : blockents) {
+				if (player.render.intersects(ent)) {
+					ent.render(g);
+				}
+			}
+		}
+		
+		if(player != null) {
+			player.render(g);
+		}
+	}
+
+	public void generate(String worldImageName) {
+
+		map = null;
+
+		if(hasSize) {
+
+			try{
+				map = loadImageFrom.LoadImageFrom(Images.class, worldImageName + ".png");
+			}catch(Exception e) {
+
+			}
+			for(int x = 0; x < worldWidth; x++) {
+				for(int y = 0; y < worldHeight; y++) {
+
+					int col = map.getRGB(x, y);
+
+					switch (col & 0xFFFFFF) {
+					case 0x808080:
+						tiles.blocks.add(new Block(new Vector2F(x * blockSize, y * blockSize), BlockType.STONE_1));
+						break;
+					case 0x404040:
+						tiles.blocks.add(new Block(new Vector2F(x * blockSize, y * blockSize), BlockType.WALL_1).isSolid(true));
+						break;
+					}
+
+				}
+			}
+
+		}
+	}
+
+	public void setSize(int worldWidth, int worldHeight) {
+		this.worldWidth = worldWidth;
+		this.worldHeight = worldHeight;
+		hasSize = true;
+	}
+
+	public Vector2F getWorldPos() {
+		return mapPos;
+	}
+	
+	public float getWorldXPos() {
+		return mapPos.xpos;
+	}
+
+	public float getWorldYPos() {
+		return mapPos.ypos;
+	}
+	
+	public void addPlayer(Player player) {
+		this.player = player;
+	}
+
+	public void removeDroppedBlockEntity(BlockEntity blockEntity) {
+		if (blockents.contains(blockEntity)) {
+			blockents.remove(blockEntity);
+		}
+	}
+	
+	public void setWorldSpawn(float xpos, float ypos) {
+		if(xpos < worldWidth) {
+			if(ypos < worldHeight) {
+				Block spawn = new Block(new Vector2F(xpos * blockSize, ypos * blockSize));
+				this.spawn = spawn;
+			}
+		}
+	}
+	
+	public Vector2F getWorldSpawn() {
+		return spawn.pos;
+	}
+	
+	public void dropBlockEntity(Vector2F pos, BufferedImage blockImage) {
+		BlockEntity ent = new BlockEntity(pos, blockImage);
+		if (!blockents.contains(ent)) {
+			blockents.add(ent);
+		}
+	}
+	
+}

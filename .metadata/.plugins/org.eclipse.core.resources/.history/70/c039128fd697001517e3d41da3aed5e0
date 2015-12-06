@@ -1,0 +1,95 @@
+package com.bt2.generator;
+
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+
+import com.bt2.main.Assets;
+import com.bt4.gop.main.Vector2F;
+
+public class Block extends Rectangle {
+
+	Vector2F pos = new Vector2F();
+	private int BlockSize = 48;
+	private BlockType blocktype;
+	private BufferedImage block;
+	public boolean isSolid;
+	private boolean isAlive;
+	private boolean dropped = false;
+
+	public Block(Vector2F pos) {
+		setBounds((int) pos.xpos, (int) pos.ypos, BlockSize, BlockSize);
+		this.pos = pos;
+		isAlive = true;
+	}
+
+
+	public Block(Vector2F pos, BlockType blocktype) {
+		setBounds((int) pos.xpos, (int) pos.ypos, BlockSize, BlockSize);
+		this.pos = pos;
+		isAlive = true;
+		this.blocktype = blocktype;
+		init();
+	}
+
+	public Block isSolid(boolean isSolid) {
+		this.isSolid = isSolid;
+		return this;
+	}
+
+	public void init() {
+		switch (blocktype) {
+		case STONE_1:
+			block = Assets.getStone_1();
+			break;
+		case WALL_1:
+			block = Assets.getWall_1();
+			break;
+		}
+	}
+
+	public void tick(double deltaTime) {
+		if (isAlive) {
+			setBounds((int) pos.xpos, (int) pos.ypos, BlockSize, BlockSize);
+		}
+	}
+
+	public void render(Graphics2D g) {
+		if (isAlive) {
+			// g.drawRect((int)pos.getWorldLocation().xpos,
+			// (int)pos.getWorldLocation().ypos, BlockSize, BlockSize);
+			if(block != null) {
+				g.drawImage(block, (int) pos.getWorldLocation().xpos, (int) pos.getWorldLocation().ypos, BlockSize, BlockSize, null);
+			}else{
+				g.fillRect((int)pos.getWorldLocation().xpos, (int)pos.getWorldLocation().ypos, BlockSize, BlockSize);
+			}
+
+			if (isSolid) {
+				g.drawRect((int) pos.getWorldLocation().xpos, (int) pos.getWorldLocation().ypos, BlockSize, BlockSize);
+				//g.drawRect((int) pos.getWorldLocation().xpos, (int) pos.getWorldLocation().ypos, BlockSize, BlockSize);
+			}
+		}
+	}
+
+	public enum BlockType {
+		STONE_1, WALL_1
+	}
+
+	public boolean isSolid() {
+		return isSolid;
+	}
+
+	public boolean isAlive() {
+		return isAlive;
+	}
+
+	public void setAlive(boolean isAlive) {
+		this.isAlive = isAlive;
+	}
+
+
+	public Object getBlockLocation() {
+		return new Vector2F((int)pos.xpos, (int)pos.ypos);
+	}
+
+}

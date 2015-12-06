@@ -1,0 +1,9 @@
+package com.bt2.moveableobjects;
+
+public class HealthManager {
+
+	public HealthManager() {
+		// TODO Auto-generated constructor stub
+	}
+
+}

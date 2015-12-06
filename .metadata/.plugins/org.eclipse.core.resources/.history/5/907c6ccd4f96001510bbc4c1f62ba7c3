@@ -1,0 +1,31 @@
+package com.bt2.moveableobjects;
+
+import java.awt.Graphics2D;
+
+public class HealthManager {
+
+	public HealthManager() {
+		
+	}
+
+	public void init() {
+		
+	}
+	
+	public void tick(double deltaTime) {
+		
+	}
+	
+	public void render(Graphics2D g) {
+		g.drawString(String.valueOf(health(102, 50)), 200, 200);
+	}
+	
+	public static int health(int hp, int damage) {
+		int currHP;
+		currHP = hp - damage;
+		hp = currHP;
+		
+		return currHP;
+	}
+	
+}

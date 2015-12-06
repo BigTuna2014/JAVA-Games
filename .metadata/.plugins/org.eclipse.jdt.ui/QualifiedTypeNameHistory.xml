@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="com.bt2.generator.TileManager"/>
+<fullyQualifiedTypeName name="com.bt2.main.Check"/>
+<fullyQualifiedTypeName name="com.bt2.gameloop.GameLoop"/>
+<fullyQualifiedTypeName name="java.lang.IndexOutOfBoundsException"/>
+<fullyQualifiedTypeName name="com.bt2.main.Animator"/>
+<fullyQualifiedTypeName name="java.awt.RadialGradientPaint"/>
+<fullyQualifiedTypeName name="com.bt4.gop.main.Light"/>
+<fullyQualifiedTypeName name="java.awt.Toolkit"/>
+<fullyQualifiedTypeName name="java.awt.event.MouseWheelListener"/>
+<fullyQualifiedTypeName name="java.awt.event.MouseListener"/>
+<fullyQualifiedTypeName name="java.awt.Graphics2D"/>
+<fullyQualifiedTypeName name="java.lang.Math"/>
+<fullyQualifiedTypeName name="com.bt2.generator.BlockEntity"/>
+<fullyQualifiedTypeName name="java.util.Vector"/>
+<fullyQualifiedTypeName name="java.awt.AlphaComposite"/>
+<fullyQualifiedTypeName name="com.bt2.gamestate.GameStateButton"/>
+<fullyQualifiedTypeName name="com.bt2.main.Assets"/>
+<fullyQualifiedTypeName name="com.bt2.managers.MouseManager"/>
+<fullyQualifiedTypeName name="com.bt2.gamestates.MenuState"/>
+<fullyQualifiedTypeName name="java.awt.geom.AffineTransform"/>
+<fullyQualifiedTypeName name="java.awt.font.FontRenderContext"/>
+<fullyQualifiedTypeName name="com.bt2.generator.Map"/>
+<fullyQualifiedTypeName name="com.bt2.main.Main"/>
+<fullyQualifiedTypeName name="com.bt4.gop.main.loadImageFrom"/>
+<fullyQualifiedTypeName name="com.bt2.images.Images"/>
+<fullyQualifiedTypeName name="com.bt2.textfiles.Textfiles"/>
+<fullyQualifiedTypeName name="java.io.FileReader"/>
+<fullyQualifiedTypeName name="java.io.File"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="java.awt.Font"/>
+<fullyQualifiedTypeName name="java.awt.Color"/>
+<fullyQualifiedTypeName name="java.lang.String"/>
+<fullyQualifiedTypeName name="com.bt2.managers.DamageManager"/>
+<fullyQualifiedTypeName name="com.bt2.gamestate.GameState"/>
+<fullyQualifiedTypeName name="com.bt2.moveableobjects.Player"/>
+<fullyQualifiedTypeName name="com.bt2.moveableobjects.HealthManager"/>
+<fullyQualifiedTypeName name="com.bt4.gop.main.Vector2F"/>
+<fullyQualifiedTypeName name="com.bt2.generator.World"/>
+<fullyQualifiedTypeName name="java.util.Timer"/>
+</qualifiedTypeNameHistroy>

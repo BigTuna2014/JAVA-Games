@@ -1,0 +1,779 @@
+package com.bt2.moveableobjects;
+
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Timer;
+
+import com.bt2.gamestate.GameStateManager;
+import com.bt2.gamestates.GameOverState;
+import com.bt2.gamestates.MenuState;
+import com.bt2.generator.World;
+import com.bt2.main.Animator;
+import com.bt2.main.Assets;
+import com.bt2.main.Check;
+import com.bt2.main.Main;
+import com.bt2.managers.GUImanager;
+import com.bt2.managers.HUDmanager;
+import com.bt2.managers.HealthManager;
+import com.bt2.managers.MouseManager;
+import com.bt4.gop.main.Vector2F;
+
+public class Player implements KeyListener {
+
+	Timer timer = new Timer();
+	
+	NPC npc = new NPC();
+	private boolean read;
+	private static GameStateManager gsm;
+	Vector2F pos;
+	private World world;
+	private int width = 32;
+	private int height = 32;
+	private int scale = 2;
+	private static boolean up, left, right, running, menu;
+	private static boolean jumping = false;
+	private static boolean down = true;
+	private static boolean debug = false;
+	private float maxSpeed = 3 * 40.0F;
+
+	public static int damage;
+	public static int health = 100;
+
+	private double speedUp = 0;
+	private float speedDown = 250;
+	private float speedLeft = 0;
+	private float speedRight = 0;
+
+	private float slowDown = 4.093F;
+
+	private float fixDT = 1.0F / 60.0F;
+	private static long animationSpeed = 180;
+
+	private static boolean moving;
+	private static boolean spawned;
+
+	MouseManager playerMM = new MouseManager();
+
+	/*
+	 * Rendering
+	 */
+	private int renderDistanceW = 51;
+	private int renderDistanceH = 20;
+	public static Rectangle render;
+
+	// TODO
+	private int animationState = 4;
+
+	/*
+	 * 0 = up 1 = down 2 = right 3 = left 4 = idle
+	 */
+
+	private ArrayList<BufferedImage> listUp;
+	Animator ani_up;
+	private ArrayList<BufferedImage> listDown;
+	Animator ani_down;
+	private ArrayList<BufferedImage> listLeft;
+	Animator ani_left;
+	private ArrayList<BufferedImage> listRight;
+	Animator ani_right;
+	private ArrayList<BufferedImage> listIdle;
+	Animator ani_idle;
+
+	private HUDmanager hudm;
+	private GUImanager guim;
+
+	public Player() {
+		pos = new Vector2F(Main.width / 2 - width / 2, Main.height / 2 - height / 2);
+	}
+
+	public void init(World world) {
+
+		hudm = new HUDmanager(world);
+		guim = new GUImanager();
+		this.world = world;
+
+		render = new Rectangle(
+				(int) (pos.xpos - pos.getWorldLocation().xpos + pos.xpos - renderDistanceW * 32 / 2 + width / 2),
+				(int) (pos.ypos - pos.getWorldLocation().ypos + pos.ypos - renderDistanceH * 32 / 2 + height / 2),
+				renderDistanceW * 32, renderDistanceH * 32);
+
+		listUp = new ArrayList<BufferedImage>();
+		listDown = new ArrayList<BufferedImage>();
+		listLeft = new ArrayList<BufferedImage>();
+		listRight = new ArrayList<BufferedImage>();
+		listIdle = new ArrayList<BufferedImage>();
+
+		listUp.add(Assets.player.getTile(0, 0, 16, 16));
+		listUp.add(Assets.player.getTile(16, 0, 16, 16));
+
+		listDown.add(Assets.player.getTile(0, 16, 16, 16));
+		listDown.add(Assets.player.getTile(16, 16, 16, 16));
+
+		listLeft.add(Assets.player.getTile(32, 0, 16, 16));
+		listLeft.add(Assets.player.getTile(48, 0, 16, 16));
+		listLeft.add(Assets.player.getTile(64, 0, 16, 16));
+		listLeft.add(Assets.player.getTile(80, 0, 16, 16));
+
+		listRight.add(Assets.player.getTile(32, 16, 16, 16));
+		listRight.add(Assets.player.getTile(48, 16, 16, 16));
+		listRight.add(Assets.player.getTile(64, 16, 16, 16));
+		listRight.add(Assets.player.getTile(80, 16, 16, 16));
+
+		listIdle.add(Assets.player.getTile(0, 32, 16, 16));
+		listIdle.add(Assets.player.getTile(16, 32, 16, 16));
+		listIdle.add(Assets.player.getTile(32, 32, 16, 16));
+		listIdle.add(Assets.player.getTile(48, 32, 16, 16));
+
+		// UP
+		ani_up = new Animator(listUp);
+		ani_up.setSpeed(animationSpeed);
+		ani_up.play();
+		// DOWN
+		ani_down = new Animator(listDown);
+		ani_down.setSpeed(animationSpeed);
+		ani_down.play();
+
+		// LEFT
+		ani_left = new Animator(listLeft);
+		ani_left.setSpeed(animationSpeed);
+		ani_left.play();
+		// RIGHT
+		ani_right = new Animator(listRight);
+		ani_right.setSpeed(animationSpeed);
+		ani_right.play();
+		// IDLE
+		ani_idle = new Animator(listIdle);
+		ani_idle.setSpeed(animationSpeed);
+		ani_idle.play();
+
+		spawned = true;
+
+	}
+
+	public void tick(double deltaTime) {
+
+		if (menu) {
+			gsm.states.push(new MenuState(gsm));
+			gsm.states.peek().init();
+		}
+
+		if (damage >= health) {
+			gsm.states.push(new GameOverState(gsm));
+			gsm.states.peek().init();
+			health = 100;
+			damage = 0;
+		}
+
+		playerMM.tick();
+		// button1.tick();
+		render = new Rectangle(
+				(int) (pos.xpos - pos.getWorldLocation().xpos + pos.xpos - renderDistanceW * 32 / 2 + width / 2),
+				(int) (pos.ypos - pos.getWorldLocation().ypos + pos.ypos - renderDistanceH * 32 / 2 + height / 2),
+				renderDistanceW * 32, renderDistanceH * 32);
+
+		float moveAmountu = (float) (speedUp * fixDT);
+		float moveAmountd = (float) (speedDown * fixDT);
+		float moveAmountl = (float) (speedLeft * fixDT);
+		float moveAmountr = (float) (speedRight * fixDT);
+
+		if (up) {
+			moveMapUp(moveAmountu);
+			animationState = 0;
+		} else {
+			// moveMapUpGlide(moveAmountu);
+		}
+		if (down) {
+			moveMapDown(moveAmountd);
+			// animationState = 1;
+		} else {
+			moveMapDownGlide(moveAmountd);
+		}
+		if (left) {
+			moveMapLeft(moveAmountl);
+			animationState = 3;
+		} else {
+			moveMapLeftGlide(moveAmountl);
+		}
+		if (right) {
+			moveMapRight(moveAmountr);
+			animationState = 2;
+		} else {
+			moveMapRightGlide(moveAmountr);
+		}
+		if (!up && !down && !right && !left) {
+			/*
+			 * standing still
+			 */
+			animationState = 4;
+			if (moving) {
+				moving = false;
+			}
+		}
+		if (right && left) {
+			animationState = 4;
+			if (moving) {
+				moving = false;
+			}
+		}
+		/*
+		 * if (up && down) { animationState = 4; if (moving) { moving = false; }
+		 * }
+		 */
+		if (right && left && down) {
+			animationState = 1;
+		}
+		if (right && left && up) {
+			animationState = 0;
+		}
+		if (up && down && left) {
+			animationState = 3;
+		}
+		if (up && down && right) {
+			animationState = 2;
+		}
+		if (up && down && right && left) {
+			animationState = 4;
+			if (moving) {
+				moving = false;
+			}
+		}
+
+		
+		if (running) {
+			if (animationSpeed != 100) {
+				animationSpeed = 100;
+				ani_up.setSpeed(animationSpeed);
+				ani_down.setSpeed(animationSpeed);
+				ani_left.setSpeed(animationSpeed);
+				ani_right.setSpeed(animationSpeed);
+				ani_idle.setSpeed(animationSpeed);
+				maxSpeed += 64;
+			}
+		} else {
+			if (animationSpeed != 180) {
+				animationSpeed = 180;
+				ani_up.setSpeed(animationSpeed);
+				ani_down.setSpeed(animationSpeed);
+				ani_left.setSpeed(animationSpeed);
+				ani_right.setSpeed(animationSpeed);
+				ani_idle.setSpeed(animationSpeed);
+				maxSpeed -= 64;
+			}
+		}
+
+	}
+
+	/*
+	 * public void PlayerMoveCode() { if (!mapMove) {
+	 * 
+	 * if (up) {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos +
+	 * world.mapPos.ypos - moveAmountu)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width), (int) (pos.ypos +
+	 * world.mapPos.ypos - moveAmountu)))) {
+	 * 
+	 * if (speedUp < maxSpeed) { speedUp += slowDown; } else { speedUp =
+	 * maxSpeed; }
+	 * 
+	 * pos.ypos -= moveAmountu;
+	 * 
+	 * } else { speedUp = 0; }
+	 * 
+	 * } else {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos +
+	 * world.mapPos.ypos - moveAmountu)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width), (int) (pos.ypos +
+	 * world.mapPos.ypos - moveAmountu)))) {
+	 * 
+	 * if (speedUp != 0) { speedUp -= slowDown;
+	 * 
+	 * if (speedUp < 0) { speedUp = 0; } }
+	 * 
+	 * pos.ypos -= moveAmountu;
+	 * 
+	 * } } if (down) {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos +
+	 * world.mapPos.ypos + height + moveAmountd)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width), (int) (pos.ypos +
+	 * world.mapPos.ypos + height + moveAmountd)))) {
+	 * 
+	 * if (speedDown < maxSpeed) { speedDown += slowDown; } else { speedDown =
+	 * maxSpeed; }
+	 * 
+	 * pos.ypos += moveAmountd;
+	 * 
+	 * } else { speedDown = 0; }
+	 * 
+	 * } else {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos +
+	 * world.mapPos.ypos + height + moveAmountd)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width), (int) (pos.ypos +
+	 * world.mapPos.ypos + height + moveAmountd)))) {
+	 * 
+	 * if (speedDown != 0) { speedDown -= slowDown;
+	 * 
+	 * if (speedDown < 0) { speedDown = 0; } }
+	 * 
+	 * pos.ypos += moveAmountd; } else { speedDown = 0; }
+	 * 
+	 * }
+	 * 
+	 * if (left) {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos - moveAmountl), (int)
+	 * (pos.ypos + world.mapPos.ypos + height)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos - moveAmountl), (int)
+	 * (pos.ypos + world.mapPos.ypos)))) {
+	 * 
+	 * if (speedLeft < maxSpeed) { speedLeft += slowDown; } else { speedLeft =
+	 * maxSpeed; }
+	 * 
+	 * pos.xpos -= moveAmountl;
+	 * 
+	 * } else { speedLeft = 0; }
+	 * 
+	 * } else {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos - moveAmountl), (int)
+	 * (pos.ypos + world.mapPos.ypos + height)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos - moveAmountl), (int)
+	 * (pos.ypos + world.mapPos.ypos)))) {
+	 * 
+	 * if (speedLeft != 0) { speedLeft -= slowDown;
+	 * 
+	 * if (speedLeft < 0) { speedLeft = 0; } } pos.xpos -= moveAmountl;
+	 * 
+	 * } else { speedLeft = 0; }
+	 * 
+	 * }
+	 * 
+	 * if (right) {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width + moveAmountr),
+	 * (int) (pos.ypos + world.mapPos.ypos)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width + moveAmountr),
+	 * (int) (pos.ypos + world.mapPos.ypos + height)))) {
+	 * 
+	 * if (speedRight < maxSpeed) { speedRight += slowDown; } else { speedRight
+	 * = maxSpeed; }
+	 * 
+	 * pos.xpos += moveAmountr;
+	 * 
+	 * } else { speedRight = 0; }
+	 * 
+	 * } else {
+	 * 
+	 * if (!Check.CollisionPlayerBlock(
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width + moveAmountr),
+	 * (int) (pos.ypos + world.mapPos.ypos)),
+	 * 
+	 * new Point((int) (pos.xpos + world.mapPos.xpos + width + moveAmountr),
+	 * (int) (pos.ypos + world.mapPos.ypos + height)))) {
+	 * 
+	 * if (speedRight != 0) { speedRight -= slowDown;
+	 * 
+	 * if (speedRight < 0) { speedRight = 0; } } pos.xpos += moveAmountr;
+	 * 
+	 * } else { speedRight = 0; }
+	 * 
+	 * }
+	 * 
+	 * } else {
+	 * 
+	 * } }
+	 */
+
+	public void moveMapUp(float speed) {
+
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos + world.mapPos.ypos - speed)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width),
+						(int) (pos.ypos + world.mapPos.ypos - speed)))) {
+
+			
+			 if (speedUp < 1000 && !jumping) {
+			 speedUp += 50;
+			 } else {
+			 speedUp = 0;
+			 jumping = true;
+			 }
+			 
+			
+			world.mapPos.ypos -= speed;
+
+		} else {
+			speedUp = 0;
+		}
+
+	}
+
+	// public void moveMapUpGlide(float speed) {
+	//
+	// if (!Check.CollisionPlayerBlock(
+	//
+	// new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos +
+	// world.mapPos.ypos - speed)),
+	//
+	// new Point((int) (pos.xpos + world.mapPos.xpos + width),
+	// (int) (pos.ypos + world.mapPos.ypos - speed)))) {
+	//
+	// if (speedUp != 0) {
+	// speedUp -= slowDown;
+	//
+	// if (speedUp < 0) {
+	// speedUp = 0;
+	// }
+	// }
+	//
+	// world.mapPos.ypos -= speed;
+	//
+	// } else {
+	// speedUp = 0;
+	// }
+	//
+	// }
+
+	public void moveMapDown(float speed) {
+
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos + world.mapPos.ypos + height + speed)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width),
+						(int) (pos.ypos + world.mapPos.ypos + height + speed)))) {
+
+			speedDown = maxSpeed;
+
+			world.mapPos.ypos += speed;
+			
+		} else {
+			speedDown = 0;
+			jumping = false;
+		}
+
+	}
+
+	public void moveMapDownGlide(float speed) {
+
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos), (int) (pos.ypos + world.mapPos.ypos + height + speed)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width),
+						(int) (pos.ypos + world.mapPos.ypos + height + speed)))) {
+
+			if (speedDown != 0) {
+				speedDown -= slowDown;
+
+				if (speedDown < 0) {
+					speedDown = 0;
+				}
+			}
+
+			world.mapPos.ypos += speed;
+
+		} else {
+			speedDown = 0;
+		}
+
+	}
+
+	public void moveMapLeft(float speed) {
+
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos - speed), (int) (pos.ypos + world.mapPos.ypos + height)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos - speed), (int) (pos.ypos + world.mapPos.ypos)))) {
+
+			if (speedLeft < maxSpeed) {
+				speedLeft += slowDown;
+			} else {
+				speedLeft = maxSpeed;
+			}
+
+			world.mapPos.xpos -= speed;
+
+		} else {
+			speedLeft = 0;
+		}
+
+	}
+
+	public void moveMapLeftGlide(float speed) {
+
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos - speed), (int) (pos.ypos + world.mapPos.ypos + height)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos - speed), (int) (pos.ypos + world.mapPos.ypos)))) {
+
+			if (speedLeft != 0) {
+				speedLeft -= slowDown;
+
+				if (speedLeft < 0) {
+					speedLeft = 0;
+				}
+			}
+			world.mapPos.xpos -= speed;
+
+		} else {
+			speedLeft = 0;
+		}
+
+	}
+
+	public void moveMapRight(float speed) {
+
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width + speed), (int) (pos.ypos + world.mapPos.ypos)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width + speed),
+						(int) (pos.ypos + world.mapPos.ypos + height)))) {
+
+			if (speedRight < maxSpeed) {
+				speedRight += slowDown;
+			} else {
+				speedRight = maxSpeed;
+			}
+
+			world.mapPos.xpos += speed;
+
+		} else {
+			speedRight = 0;
+		}
+
+	}
+
+	public void moveMapRightGlide(float speed) {
+		if (!Check.CollisionPlayerBlock(
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width + speed), (int) (pos.ypos + world.mapPos.ypos)),
+
+				new Point((int) (pos.xpos + world.mapPos.xpos + width + speed),
+						(int) (pos.ypos + world.mapPos.ypos + height)))) {
+
+			if (speedRight != 0) {
+				speedRight -= slowDown;
+
+				if (speedRight < 0) {
+					speedRight = 0;
+				}
+			}
+			world.mapPos.xpos += speed;
+
+		} else {
+			speedRight = 0;
+		}
+	}
+
+	// GameStateButton button1 = new GameStateButton(200, 200);
+
+	public void render(Graphics2D g) {
+		// g.fillRect((int) pos.xpos, (int) pos.ypos, width, height);
+
+		npc.firstLine("First Line");
+		npc.secondLine("Second Line");
+		npc.thirdLine("Third LIne");
+
+		g.clipRect(0, 0, Main.width, Main.height);
+
+		// UP
+		if (animationState == 0) {
+			g.drawImage(ani_up.sprite, (int) pos.xpos - width / 2, (int) pos.ypos - height, width * scale,
+					height * scale, null);
+			if (up) {
+				ani_up.update(System.currentTimeMillis());
+			}
+		}
+		// DOWN
+		if (animationState == 1) {
+			g.drawImage(ani_down.sprite, (int) pos.xpos - width / 2, (int) pos.ypos - height, width * scale,
+					height * scale, null);
+			if (down) {
+				ani_down.update(System.currentTimeMillis());
+			}
+		}
+		// RIGHT
+		if (animationState == 2) {
+			g.drawImage(ani_right.sprite, (int) pos.xpos - width / 2, (int) pos.ypos - height, width * scale,
+					height * scale, null);
+			if (right) {
+				ani_right.update(System.currentTimeMillis());
+			}
+		}
+		// LEFT
+		if (animationState == 3) {
+			g.drawImage(ani_left.sprite, (int) pos.xpos - width / 2, (int) pos.ypos - height, width * scale,
+					height * scale, null);
+			if (left) {
+				ani_left.update(System.currentTimeMillis());
+			}
+		}
+		// IDLE
+		if (animationState == 4) {
+			g.drawImage(ani_idle.sprite, (int) pos.xpos - width / 2, (int) pos.ypos - height, width * scale,
+					height * scale, null);
+			ani_idle.update(System.currentTimeMillis());
+		}
+
+		g.drawRect((int) pos.xpos - renderDistanceW * 32 / 2 + width / 2,
+				(int) pos.ypos - renderDistanceH * 32 / 2 + height / 2, renderDistanceW * 32, renderDistanceH * 32);
+		guim.render(g);
+		hudm.render(g);
+		// button1.render(g);
+		playerMM.render(g);
+		npc.render(g);
+		g.drawString(String.valueOf(HealthManager.health(health, damage)), 200, 200);
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		int key = e.getKeyCode();
+
+		if (key == KeyEvent.VK_W) {
+			if (!moving) {
+				moving = true;
+			}
+			up = true;
+		}
+
+		/*
+		 * if (key == KeyEvent.VK_S) { if(!moving) { moving = true; } down =
+		 * true; }
+		 */
+		if (key == KeyEvent.VK_A) {
+			if (!moving) {
+				moving = true;
+			}
+			left = true;
+		}
+		if (key == KeyEvent.VK_D) {
+			if (!moving) {
+				moving = true;
+			}
+			right = true;
+		}
+		if (key == KeyEvent.VK_SHIFT) {
+			running = true;
+		}
+		if (key == KeyEvent.VK_ESCAPE) {
+			menu = true;
+		}
+		if (key == KeyEvent.VK_SPACE) {
+			if (!read) {
+				npc.talking = true;
+				read = true;
+			} else if (read) {
+				npc.nextLine();
+			}
+		}
+		if (key == KeyEvent.VK_ENTER) {
+			npc.talking = false;
+		}
+		if (key == KeyEvent.VK_F3) {
+			if (!debug) {
+				debug = true;
+			} else {
+				debug = false;
+			}
+		}
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		int key = e.getKeyCode();
+
+		if (key == KeyEvent.VK_W) {
+			up = false;
+		}
+
+		/*
+		 * if (key == KeyEvent.VK_S) { down = false; }
+		 */
+		if (key == KeyEvent.VK_A) {
+			left = false;
+		}
+		if (key == KeyEvent.VK_D) {
+			right = false;
+		}
+		if (key == KeyEvent.VK_SHIFT) {
+			running = false;
+		}
+		if (key == KeyEvent.VK_ESCAPE) {
+			menu = false;
+		}
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+
+	}
+
+	////////////////////////////////
+	////////////////////////////////
+	////////////////////////////////
+
+	public Vector2F getPos() {
+		return pos;
+	}
+
+	public float getMaxSpeed() {
+		return maxSpeed;
+	}
+
+	public float getSlowDown() {
+		return slowDown;
+	}
+
+	public World getWorld() {
+		return world;
+	}
+
+	public boolean isDebuging() {
+		return debug;
+	}
+
+	public boolean isMoving() {
+		return moving;
+	}
+
+	public boolean hasSpawned() {
+		return spawned;
+	}
+
+}

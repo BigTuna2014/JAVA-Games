@@ -1,0 +1,44 @@
+package com.bt2.managers;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+
+import com.bt2.generator.World;
+import com.bt2.main.Main;
+import com.bt2.moveableobjects.Player;
+
+public class HUDmanager {
+
+	private Player player;
+	
+	private World world;
+	
+	public HUDmanager(Player player, World world) {
+		this.player = player;
+		this.world = world;
+		
+	}
+	
+	public void init() {
+
+	}
+	
+	public void tick(double deltaTime) {
+		
+	}
+	
+	public void render(Graphics2D g) {
+		g.setColor(Color.BLACK);
+		g.fillRect(0, 0, Main.width, Main.height / 6);
+		g.fillRect(0, 750, Main.width, Main.height);
+		g.setColor(Color.WHITE);
+		
+		if(player.isDebuging()) {
+			g.drawString("[DEBUG]", 20, 20);
+			g.drawString("[MapXpos] " + world.getWorldXPos(), 20, 40);
+			g.drawString("[MapYpos] " + world.getWorldYPos(), 20, 60);
+		}
+		
+	}
+	
+}

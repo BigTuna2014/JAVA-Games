@@ -1,0 +1,28 @@
+package com.bt2.gamestates;
+
+import java.awt.Graphics2D;
+
+import com.bt2.gamestate.GameState;
+
+public class GameOverState extends GameState {
+
+	public GameOverState() {
+		
+	}
+
+	@Override
+	public void init() {
+		
+	}
+
+	@Override
+	public void tick(double deltaTime) {
+		
+	}
+
+	@Override
+	public void render(Graphics2D g) {
+		
+	}
+
+}

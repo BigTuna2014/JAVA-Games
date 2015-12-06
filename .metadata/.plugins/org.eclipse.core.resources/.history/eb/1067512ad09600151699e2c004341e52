@@ -1,0 +1,9 @@
+package com.bt2.gamestates;
+
+public class GameOverState {
+
+	public GameOverState() {
+		// TODO Auto-generated constructor stub
+	}
+
+}

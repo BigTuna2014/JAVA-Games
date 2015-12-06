@@ -1,0 +1,42 @@
+package com.bt2.gameloop;
+
+import com.bt2.gamestate.GameStateManager;
+import com.bt2.main.Assets;
+import com.bt4.gop.main.IDGameLoop;
+import com.bt4.gop.main.Vector2F;
+
+public class GameLoop extends IDGameLoop {
+
+	GameStateManager  gsm;
+	public static Assets assets = new Assets();
+	
+	public GameLoop(int fwidth, int fheight) {
+		super(fwidth, fheight);
+	}
+
+	@Override
+	public void init() {
+		assets.init();
+		gsm = new GameStateManager();
+		gsm.init();
+		super.init();
+	}
+	
+	@Override
+	public void tick(double deltaTime) {
+		gsm.tick(deltaTime);
+	}
+	
+	@Override
+	public void render() {
+		super.render();
+		gsm.render(graphics2D);
+		clear();
+	}
+	
+	@Override
+	public void clear() {
+		super.clear();
+	}
+
+}

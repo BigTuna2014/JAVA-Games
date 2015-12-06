@@ -1,0 +1,87 @@
+package com.bt2.generator;
+
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+
+import com.bt2.generator.Block.BlockType;
+import com.bt2.images.Images;
+import com.bt2.moveableobjects.Player;
+import com.bt4.gop.main.Vector2F;
+import com.bt4.gop.main.loadImageFrom;
+
+public class World {
+
+	private String worldName;
+	private BufferedImage map;
+	private int worldWidth;
+	private int worldHeight;
+	private int blockSize = 48;
+
+	private Player player;
+	TileManager tiles;
+
+	private boolean hasSize = false;
+
+	public World(String worldName) {
+		this.worldName = worldName;
+	}
+
+	public void init() {
+		tiles = new TileManager();
+	}
+
+	public void tick(double deltaTime) {
+		tiles.tick(deltaTime);
+		player.tick(deltaTime);
+	}
+
+	public void render(Graphics2D g) {
+		tiles.render(g);
+
+		if(player != null) {
+			player.render(g);
+		}
+	}
+
+	public void generate(String worldImageName) {
+
+		map = null;
+
+		if(hasSize) {
+
+			try{
+				map = loadImageFrom.LoadImageFrom(Images.class, worldImageName + ".png");
+			}catch(Exception e) {
+
+			}
+			for(int x = 0; x < worldWidth; x++) {
+				for(int y = 0; y < worldHeight; y++) {
+
+					int col = map.getRGB(x, y);
+
+					switch (col & 0xFFFFFF) {
+					case 0x808080:
+						tiles.blocks.add(new Block(new Vector2F(x * blockSize, y * blockSize), BlockType.STONE_1));
+						break;
+					case 0x404040:
+						tiles.blocks.add(new Block(new Vector2F(x * blockSize, y * blockSize), BlockType.WALL_1).isSolid(true));
+						break;
+					}
+
+				}
+			}
+
+		}
+	}
+
+	public void setSize(int worldWidth, int worldHeight) {
+		this.worldWidth = worldWidth;
+		this.worldHeight = worldHeight;
+		hasSize = true;
+	}
+
+	public void addPlayer(Player player) {
+		this.player = player;
+	}
+
+}

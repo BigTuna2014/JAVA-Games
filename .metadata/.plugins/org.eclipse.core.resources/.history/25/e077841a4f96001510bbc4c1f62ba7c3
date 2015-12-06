@@ -1,0 +1,56 @@
+package com.bt2.gamestates;
+
+import java.awt.Graphics2D;
+
+import com.bt2.gamestate.GameState;
+import com.bt2.gamestate.GameStateManager;
+import com.bt2.generator.Map;
+import com.bt2.main.Main;
+import com.bt2.managers.HUDmanager;
+import com.bt2.moveableobjects.HealthManager;
+import com.bt2.moveableobjects.NPC;
+import com.bt2.moveableobjects.Player;
+import com.bt2.moveableobjects.TestEnemy;
+
+public class TheGameLevelLoader extends GameState {
+
+	Player player = new Player();
+	Map map = new Map();
+	NPC npc = new NPC();
+	TestEnemy te = new TestEnemy();
+	HUDmanager hud = new HUDmanager(player);
+	HealthManager hm = new HealthManager();
+	
+	public TheGameLevelLoader(GameStateManager gsm) {
+		super(gsm);
+	}
+
+	@Override
+	public void init() {
+		player.init(null);
+		map.init();
+		te.init();
+		hud.init();
+		hm.init();
+	}
+
+	@Override
+	public void tick(double deltaTime) {
+		player.tick(deltaTime);
+		map.tick(deltaTime);
+		te.tick(deltaTime);
+		hud.tick(deltaTime);
+		hm.init();
+	}
+
+	@Override
+	public void render(Graphics2D g) {
+		map.render(g);
+		npc.render(g);
+		player.render(g);
+		g.clipRect(0, 0, Main.width, Main.height);
+		te.render(g);
+		hud.render(g);
+	}
+	
+}

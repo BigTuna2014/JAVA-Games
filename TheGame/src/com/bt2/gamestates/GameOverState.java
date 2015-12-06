@@ -1,0 +1,44 @@
+package com.bt2.gamestates;
+
+import java.awt.Graphics2D;
+
+import com.bt2.gamestate.GameState;
+import com.bt2.gamestate.GameStateButton;
+import com.bt2.gamestate.GameStateManager;
+import com.bt2.main.Main;
+import com.bt2.managers.MouseManager;
+import com.bt2.moveableobjects.Player;
+
+public class GameOverState extends GameState {
+
+	GameStateButton cont;
+	GameStateButton menu;
+	MouseManager mm;
+	Player p;
+	
+	public GameOverState(GameStateManager gsm) {
+		super(gsm);
+	}
+
+	@Override
+	public void init() {
+		mm = new MouseManager();
+		cont = new GameStateButton(Main.width / 3, 200, new TheGameLevelLoader(gsm), gsm, "Continue");
+		menu = new GameStateButton(Main.width / 3, 300, new MenuState(gsm), gsm, "Main Menu");
+	}
+
+	@Override
+	public void tick(double deltaTime) {
+	mm.tick();
+	cont.tick();
+	menu.tick();
+	}
+
+	@Override
+	public void render(Graphics2D g) {
+		cont.render(g);
+		menu.render(g);
+		mm.render(g);
+	}
+
+}
